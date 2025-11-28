@@ -54,6 +54,18 @@ def _init_core_tables(cursor: sqlite3.Cursor) -> None:
         )
     """)
 
+    # Additive, idempotent performance indexes (do not change schema/behavior)
+    # Index to accelerate chronological scans (e.g., GET /thoughts ordered by created_at)
+    cursor.execute("""
+        CREATE INDEX IF NOT EXISTS idx_thoughts_created_at
+        ON thoughts (datetime(created_at))
+    """)
+    # Composite index to accelerate per-user daily checks and ordered fetches
+    cursor.execute("""
+        CREATE INDEX IF NOT EXISTS idx_thoughts_user_created
+        ON thoughts (username, datetime(created_at))
+    """)
+
 
 def _seed_app_info(cursor: sqlite3.Cursor) -> None:
     """Seed minimal app_info metadata idempotently."""
@@ -139,6 +151,18 @@ def main() -> None:
             print("Verified: 'thoughts' table is present.")
         else:
             print("Error: 'thoughts' table verification failed.")
+
+        # Brief confirmation logs for indexes
+        try:
+            cursor.execute("SELECT name FROM sqlite_master WHERE type='index' AND name IN ('idx_thoughts_created_at','idx_thoughts_user_created')")
+            idxs = {row[0] for row in cursor.fetchall()}
+            if 'idx_thoughts_created_at' in idxs:
+                print("Index ready: idx_thoughts_created_at on datetime(created_at)")
+            if 'idx_thoughts_user_created' in idxs:
+                print("Index ready: idx_thoughts_user_created on (username, datetime(created_at))")
+        except Exception as _e:
+            # Non-fatal: indexing is optional optimization
+            print("Note: Skipped index verification (non-fatal).")
     finally:
         # Gather stats before closing
         try:
