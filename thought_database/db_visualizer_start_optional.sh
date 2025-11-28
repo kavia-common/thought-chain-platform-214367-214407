@@ -3,10 +3,10 @@ set -euo pipefail
 
 # Optional db_visualizer bootstrapper.
 # - Installs Node dependencies if package.json exists.
-# - Tries to pin a known-good express version if install issues happen.
-# - Starts the visualizer in the background only if 'node' and 'npm' are available.
+# - Starts the visualizer only when explicitly enabled and dependencies resolve.
 # - Never exits non-zero; errors are logged and ignored.
-# - Additional guard: requires START_DB_VISUALIZER=1 to proceed at all.
+# - Requires START_DB_VISUALIZER=1 to proceed.
+# - Uses npm run start:optional to avoid direct node server.js invocations.
 
 VIS_DIR="db_visualizer"
 LOG_FILE="${VIS_DIR}/visualizer.log"
@@ -19,6 +19,12 @@ finish_ok() {
 # Require explicit opt-in
 if [ "${START_DB_VISUALIZER:-0}" != "1" ]; then
   echo "[db_visualizer] START_DB_VISUALIZER not set to 1. Skipping."
+  finish_ok
+fi
+
+# Do not attempt to run from inside the visualizer folder during builds
+if [ "$(basename "$(pwd)")" = "db_visualizer" ]; then
+  echo "[db_visualizer] Running inside db_visualizer directory; refusing to start to avoid CI auto-start." | tee -a "${LOG_FILE}" || true
   finish_ok
 fi
 
@@ -38,23 +44,18 @@ fi
 
 pushd "${VIS_DIR}" >/dev/null || finish_ok
 
-# Ensure express dependency is pinned to a compatible version to avoid legacy "Cannot find module ./lib/express" issues.
-# The included package.json uses ^4.18.2 which should be fine. We explicitly set it if missing or broken.
-ensure_dependencies() {
+install_dependencies() {
   echo "[db_visualizer] Installing dependencies..." | tee -a "${LOG_FILE}" || true
-  # Clean previous node_modules if corrupted
   rm -rf node_modules package-lock.json 2>/dev/null || true
-  # Install with legacy-peer-deps to avoid conflicts in constrained environments
-  if ! npm ci --legacy-peer-deps >> "${LOG_FILE}" 2>&1; then
-    echo "[db_visualizer] npm ci failed, attempting npm install..." | tee -a "${LOG_FILE}" || true
-    if ! npm install --no-audit --no-fund --legacy-peer-deps >> "${LOG_FILE}" 2>&1; then
-      echo "[db_visualizer] npm install failed. Trying to explicitly install express@4 ..." | tee -a "${LOG_FILE}" || true
-      npm install express@4 --no-audit --no-fund --legacy-peer-deps >> "${LOG_FILE}" 2>&1 || true
-    fi
+  # Use npm ci if lockfile exists, else npm install
+  if [ -f package-lock.json ]; then
+    npm ci --legacy-peer-deps >> "${LOG_FILE}" 2>&1 || true
+  else
+    npm install --no-audit --no-fund --legacy-peer-deps >> "${LOG_FILE}" 2>&1 || true
   fi
 }
 
-ensure_dependencies
+install_dependencies
 
 # Verify express resolves
 if ! node -e "require.resolve('express')" >/dev/null 2>&1; then
@@ -64,9 +65,8 @@ if ! node -e "require.resolve('express')" >/dev/null 2>&1; then
 fi
 
 # Start the server in background; don't fail container if it crashes
-echo "[db_visualizer] Starting server in background..." | tee -a "${LOG_FILE}" || true
-# Use nohup to detach; redirect output to log
-nohup npm run start >> "${LOG_FILE}" 2>&1 & disown || true
+echo "[db_visualizer] Starting server in background via npm run start:optional..." | tee -a "${LOG_FILE}" || true
+nohup npm run start:optional >> "${LOG_FILE}" 2>&1 & disown || true
 
 popd >/dev/null || true
 finish_ok

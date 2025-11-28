@@ -7,6 +7,7 @@ Key points:
 - Readiness is validated via file checks and by opening the database, not by probing a port.
 - The backend should read the absolute file path from db_connection.txt or use the known path to connect.
 - The container completes startup by initializing SQLite and then exiting with status 0 (no long-running process).
+- Startup command: explicitly run `bash start.sh`. No Node.js process is started by default.
 
 Files:
 - myapp.db: the SQLite database file.
@@ -34,11 +35,11 @@ Manual usage of the optional viewer (opt-in):
 - From the `thought_database` directory:
   - Source the SQLite path env: `source db_visualizer/sqlite.env`
   - Start viewer best-effort: `START_DB_VISUALIZER=1 bash db_visualizer_start_optional.sh`
-  - Or manually:
+  - Or manually (discouraged for CI; for local dev only):
     ```
     cd db_visualizer
     npm ci --legacy-peer-deps || npm install --no-audit --no-fund --legacy-peer-deps
-    npm run start
+    npm run start:optional
     ```
   - Open http://localhost:3000
 

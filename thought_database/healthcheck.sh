@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
-# Healthcheck: Only validate SQLite readiness. Do NOT check any optional Node viewer.
+# Healthcheck: Only validate SQLite readiness.
+# Do NOT check any optional Node viewer or HTTP ports.
+# This script must succeed solely based on SQLite file presence and accessibility.
 
 DB_FILE="myapp.db"
 CONN_INFO_FILE="db_connection.txt"
@@ -12,6 +14,10 @@ if [ ! -s "${DB_FILE}" ]; then
 fi
 
 # 2) Check that we can connect and query sqlite version via test_db.py
+if ! command -v python3 >/dev/null 2>&1; then
+  echo "Health: python3 not found"
+  exit 1
+fi
 if ! python3 test_db.py >/dev/null 2>&1; then
   echo "Health: sqlite connection test failed"
   exit 1

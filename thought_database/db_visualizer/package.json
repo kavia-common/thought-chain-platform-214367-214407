@@ -2,10 +2,11 @@
   "name": "simple-db-viewer",
   "version": "1.0.0",
   "description": "Simple database viewer for PostgreSQL, MySQL, SQLite, and MongoDB",
-  "main": "server.js",
+  "private": true,
+  "type": "commonjs",
   "scripts": {
-    "start": "node server.js --host 0.0.0.0",
-    "dev": "nodemon server.js",
+    "start": "echo \"Visualizer disabled by default. Use START_DB_VISUALIZER=1 with db_visualizer_start_optional.sh\" && exit 0",
+    "dev": "echo \"Visualizer dev disabled. Use START_DB_VISUALIZER=1 with db_visualizer_start_optional.sh\" && exit 0",
     "start:optional": "node -e \"try{require.resolve('express');process.exit(0)}catch(e){process.exit(1)}\" && node server.js --host 0.0.0.0 || echo 'Skipping visualizer start (express not installed)'"
   },
   "dependencies": {

@@ -2,7 +2,8 @@
 set -euo pipefail
 
 # Start script for SQLite "thought_database" container.
-# This container does not expose any TCP port. It prepares the SQLite file and exits successfully.
+# This container should be launched with: bash start.sh
+# It prepares the SQLite file and exits successfully (status 0).
 # The optional Node.js db_visualizer is disabled by default and MUST NOT affect readiness.
 
 echo "[thought_database] Starting initialization..."
@@ -38,4 +39,5 @@ fi
 
 # Exit without keeping a process alive; this container's role is to prepare the DB file.
 echo "[thought_database] Done."
+# Always exit 0 on success. Any failure above exits non-zero explicitly.
 exit 0
