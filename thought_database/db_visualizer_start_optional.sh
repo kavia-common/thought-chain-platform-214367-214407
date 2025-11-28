@@ -6,6 +6,7 @@ set -euo pipefail
 # - Tries to pin a known-good express version if install issues happen.
 # - Starts the visualizer in the background only if 'node' and 'npm' are available.
 # - Never exits non-zero; errors are logged and ignored.
+# - Additional guard: requires START_DB_VISUALIZER=1 to proceed at all.
 
 VIS_DIR="db_visualizer"
 LOG_FILE="${VIS_DIR}/visualizer.log"
@@ -14,6 +15,12 @@ finish_ok() {
   echo "[db_visualizer] Optional visualizer step completed (best-effort)."
   exit 0
 }
+
+# Require explicit opt-in
+if [ "${START_DB_VISUALIZER:-0}" != "1" ]; then
+  echo "[db_visualizer] START_DB_VISUALIZER not set to 1. Skipping."
+  finish_ok
+fi
 
 echo "[db_visualizer] Optional startup beginning..."
 
