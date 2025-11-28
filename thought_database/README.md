@@ -24,7 +24,7 @@ How readiness is determined:
 
 Optional: Database viewer (for local development)
 - A simple Node-based DB viewer exists under db_visualizer/. It serves HTTP (default port 3000) but is optional and NOT required for container readiness.
-- The container will attempt to start it best-effort at boot via `db_visualizer_start_optional.sh` if Node/npm are available. Failures are logged and ignored.
+- The visualizer is disabled by default during container startup. To start it manually (best-effort), set `START_DB_VISUALIZER=1` and run `start.sh`, or run `bash db_visualizer_start_optional.sh` directly from the `thought_database` directory. Failures are logged and ignored.
 
 Manual usage of the optional viewer:
 - Ensure Node.js and npm are installed in the environment.

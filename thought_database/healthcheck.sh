@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
+# Healthcheck: Only validate SQLite readiness. Do NOT check any optional Node viewer.
 
 DB_FILE="myapp.db"
 CONN_INFO_FILE="db_connection.txt"

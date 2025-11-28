@@ -3,7 +3,7 @@ set -euo pipefail
 
 # Start script for SQLite "thought_database" container.
 # This container does not expose any TCP port. It prepares the SQLite file and exits successfully.
-# The optional Node.js db_visualizer is best-effort and MUST NOT affect readiness.
+# The optional Node.js db_visualizer is disabled by default and MUST NOT affect readiness.
 
 echo "[thought_database] Starting initialization..."
 # Ensure python is available; fallback error if not
@@ -23,13 +23,17 @@ fi
 
 echo "[thought_database] Initialization complete. SQLite database is ready as a file (no TCP port)."
 
-# Optionally attempt to start the db_visualizer in best-effort mode (non-blocking).
-# This should never cause the container to fail.
-if [ -d "db_visualizer" ]; then
-  echo "[thought_database] Attempting to start optional db_visualizer..."
-  bash db_visualizer_start_optional.sh || true
+# Guard optional db_visualizer behind an env flag; default OFF.
+# To enable in a dev environment: set START_DB_VISUALIZER=1
+if [ "${START_DB_VISUALIZER:-0}" = "1" ]; then
+  if [ -d "db_visualizer" ]; then
+    echo "[thought_database] START_DB_VISUALIZER=1 -> attempting optional db_visualizer start (non-blocking)..."
+    bash db_visualizer_start_optional.sh || true
+  else
+    echo "[thought_database] db_visualizer directory not found. Skipping visualizer startup."
+  fi
 else
-  echo "[thought_database] db_visualizer directory not found. Skipping visualizer startup."
+  echo "[thought_database] Optional db_visualizer disabled (START_DB_VISUALIZER not set to 1)."
 fi
 
 # Exit without keeping a process alive; this container's role is to prepare the DB file.
