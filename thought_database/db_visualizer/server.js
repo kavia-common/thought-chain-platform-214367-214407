@@ -1,3 +1,8 @@
+/**
+ * Optional development database viewer for SQLite/Postgres/MySQL/MongoDB.
+ * This server is NOT required for thought_database container readiness.
+ * It is started best-effort and failures should not break the container.
+ */
 const express = require('express');
 const path = require('path');
 const fs = require('fs');

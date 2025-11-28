@@ -14,6 +14,7 @@ Files:
 - db_connection.txt: contains the absolute path and a `sqlite:///` connection string for consumers.
 - start.sh: container entrypoint to initialize the DB and exit successfully (no running service).
 - healthcheck.sh: returns success if the DB file is present and accessible.
+- db_visualizer_start_optional.sh: best-effort helper to install and start the optional Node-based database viewer without impacting readiness.
 
 How readiness is determined:
 - The healthcheck script checks:
@@ -22,7 +23,21 @@ How readiness is determined:
   3) db_connection.txt exists and includes a sqlite connection string.
 
 Optional: Database viewer (for local development)
-- A simple Node-based DB viewer exists under db_visualizer/. It serves HTTP (default port 3000) but is optional and not required for container readiness.
+- A simple Node-based DB viewer exists under db_visualizer/. It serves HTTP (default port 3000) but is optional and NOT required for container readiness.
+- The container will attempt to start it best-effort at boot via `db_visualizer_start_optional.sh` if Node/npm are available. Failures are logged and ignored.
+
+Manual usage of the optional viewer:
+- Ensure Node.js and npm are installed in the environment.
+- From the `thought_database` directory:
+  - Source the SQLite path env: `source db_visualizer/sqlite.env`
+  - Start viewer best-effort: `bash db_visualizer_start_optional.sh`
+  - Or manually:
+    ```
+    cd db_visualizer
+    npm ci --legacy-peer-deps || npm install --no-audit --no-fund --legacy-peer-deps
+    npm run start
+    ```
+  - Open http://localhost:3000
 
 Backend integration:
 - The absolute path to the database is written by init_db.py to db_connection.txt as a `sqlite:///...` connection string.

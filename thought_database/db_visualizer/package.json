@@ -5,7 +5,8 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js --host 0.0.0.0",
-    "dev": "nodemon server.js"
+    "dev": "nodemon server.js",
+    "start:optional": "node -e \"try{require.resolve('express');process.exit(0)}catch(e){process.exit(1)}\" && node server.js --host 0.0.0.0 || echo 'Skipping visualizer start (express not installed)'"
   },
   "dependencies": {
     "express": "^4.18.2",
